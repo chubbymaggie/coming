@@ -13,9 +13,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.log4j.Logger;
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
 import org.junit.Ignore;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import fr.inria.coming.changeminer.analyzer.DiffEngineFacade;
 import fr.inria.coming.changeminer.entity.GranuralityType;
@@ -42,9 +43,9 @@ public class BugFixRunner {
 		withactions = 0;
 		MapCounter<String> counter = new MapCounter<>();
 		MapCounter<String> counterParent = new MapCounter<>();
-		JSONObject root = new JSONObject();
-		JSONArray firstArray = new JSONArray();
-		root.put("diffs", firstArray);
+		JsonObject root = new JsonObject();
+		JsonArray firstArray = new JsonArray();
+		root.add("diffs", firstArray);
 
 		File dir = new File(path);
 
@@ -62,6 +63,10 @@ public class BugFixRunner {
 				// System.out.println(diffanalyzed + "/" + dir.listFiles().length);
 			}
 
+			if (difffile.getName().equals("948316") || "995086".equals(difffile.getName())
+					|| "2194".equals(difffile.getName()) || "4094".equals(difffile.getName())
+					|| "2954".equals(difffile.getName()) || "2150".equals(difffile.getName()))
+				continue;
 			log.debug("-commit->" + difffile);
 			System.out.println(diffanalyzed + "/" + dir.listFiles().length + ": " + difffile.getName());
 
@@ -70,13 +75,13 @@ public class BugFixRunner {
 				continue;
 			}
 
-			JSONObject jsondiff = new JSONObject();
+			JsonObject jsondiff = new JsonObject();
 			firstArray.add(jsondiff);
-			jsondiff.put("diffid", difffile.getName());
+			jsondiff.addProperty("diffid", difffile.getName());
 
-			JSONArray filesArray = processDiff(counter, counterParent, difffile);
+			JsonArray filesArray = processDiff(counter, counterParent, difffile);
 
-			jsondiff.put("files", filesArray);
+			jsondiff.add("files", filesArray);
 			atEndCommit(difffile);
 
 			if (diffanalyzed == ComingProperties.getPropertyInteger("maxdifftoanalyze")) {
@@ -96,9 +101,9 @@ public class BugFixRunner {
 		Map probParent = counterParent.getProbabilies();
 		addStats(root, "probabilityParent", probParent);
 
-		root.put("diffwithactions", withactions);
-		root.put("diffzeroactions", zero);
-		root.put("differrors", error);
+		root.addProperty("diffwithactions", withactions);
+		root.addProperty("diffzeroactions", zero);
+		root.addProperty("differrors", error);
 
 		System.out.println("\n***\nProb: " + counter.getProbabilies());
 		System.out.println("Withactions " + withactions);
@@ -116,8 +121,8 @@ public class BugFixRunner {
 	}
 
 	@SuppressWarnings("unchecked")
-	public JSONArray processDiff(MapCounter<String> counter, MapCounter<String> counterParent, File difffile) {
-		JSONArray filesArray = new JSONArray();
+	public JsonArray processDiff(MapCounter<String> counter, MapCounter<String> counterParent, File difffile) {
+		JsonArray filesArray = new JsonArray();
 		for (File fileModif : difffile.listFiles()) {
 			int i_hunk = 0;
 
@@ -125,17 +130,18 @@ public class BugFixRunner {
 				continue;
 
 			String pathname = fileModif.getAbsolutePath() + File.separator + difffile.getName() + "_"
-					+ fileModif.getName() + "_" + i_hunk;
+					+ fileModif.getName() // + "_" + i_hunk
+			;
 			File previousVersion = new File(pathname + "_s.java");
 			if (!previousVersion.exists()) {
 				break;
 			}
 
-			JSONObject file = new JSONObject();
+			JsonObject file = new JsonObject();
 			filesArray.add(file);
-			file.put("name", fileModif.getName());
-			JSONArray changesArray = new JSONArray();
-			file.put("changes", changesArray);
+			file.addProperty("name", fileModif.getName());
+			JsonArray changesArray = new JsonArray();
+			file.add("changes", changesArray);
 
 			File postVersion = new File(pathname + "_t.java");
 			i_hunk++;
@@ -143,18 +149,28 @@ public class BugFixRunner {
 
 				Diff diff = getdiffFuture(previousVersion, postVersion);
 				if (diff == null) {
-					file.put("status", "differror");
+					file.addProperty("status", "differror");
+					continue;
+				}
+				Integer maxASTChanges = ComingProperties.getPropertyInteger("MAX_AST_CHANGES_PER_FILE");
+				if (diff.getRootOperations().size() > maxASTChanges) {
+					file.addProperty("status", "max_changes_" + maxASTChanges);
 					continue;
 				}
 
-				JSONObject singlediff = new JSONObject();
+				if (diff.getRootOperations().size() == 0) {
+					file.addProperty("status", "no_change");
+					continue;
+				}
+
+				JsonObject singlediff = new JsonObject();
 				changesArray.add(singlediff);
 				// singlediff.put("filename", fileModif.getName());
-				singlediff.put("rootop", diff.getRootOperations().size());
-				JSONArray operationsArray = new JSONArray();
+				singlediff.addProperty("rootop", diff.getRootOperations().size());
+				JsonArray operationsArray = new JsonArray();
 
-				singlediff.put("operations", operationsArray);
-				singlediff.put("allop", diff.getAllOperations().size());
+				singlediff.add("operations", operationsArray);
+				singlediff.addProperty("allop", diff.getAllOperations().size());
 
 				processDiff(fileModif, diff);
 
@@ -170,7 +186,7 @@ public class BugFixRunner {
 								operation.getAction().getName() + "_" + operation.getNode().getClass().getSimpleName()
 										+ "_" + operation.getNode().getParent().getClass().getSimpleName());
 
-						JSONObject op = getJSONFromOperator(operation);
+						JsonObject op = getJSONFromOperator(operation);
 
 						operationsArray.add(op);
 					}
@@ -179,12 +195,12 @@ public class BugFixRunner {
 					zero++;
 					log.debug("-file->" + fileModif + " zero actions ");
 				}
-				file.put("status", "ok");
+				file.addProperty("status", "ok");
 			} catch (Throwable e) {
 				System.out.println("error with " + previousVersion);
 				e.printStackTrace();
 				error++;
-				file.put("status", "exception");
+				file.addProperty("status", "exception");
 			}
 
 		}
@@ -197,16 +213,18 @@ public class BugFixRunner {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected JSONObject getJSONFromOperator(Operation operation) {
-		JSONObject op = new JSONObject();
-		op.put("operator", operation.getAction().getName());
-		op.put("src", (operation.getSrcNode() != null) ? operation.getSrcNode().getClass().getSimpleName() : "null");
-		op.put("dst", (operation.getDstNode() != null) ? operation.getDstNode().getParent().getClass().getSimpleName()
-				: "null");
-
-		op.put("srcparent",
+	protected JsonObject getJSONFromOperator(Operation operation) {
+		JsonObject op = new JsonObject();
+		op.addProperty("operator", operation.getAction().getName());
+		op.addProperty("src",
 				(operation.getSrcNode() != null) ? operation.getSrcNode().getClass().getSimpleName() : "null");
-		op.put("dstparent",
+		op.addProperty("dst",
+				(operation.getDstNode() != null) ? operation.getDstNode().getParent().getClass().getSimpleName()
+						: "null");
+
+		op.addProperty("srcparent",
+				(operation.getSrcNode() != null) ? operation.getSrcNode().getClass().getSimpleName() : "null");
+		op.addProperty("dstparent",
 				(operation.getDstNode() != null) ? operation.getDstNode().getParent().getClass().getSimpleName()
 						: "null");
 		return op;
@@ -239,14 +257,14 @@ public class BugFixRunner {
 		return d;
 	}
 
-	private void addStats(JSONObject root, String key1, Map sorted) {
-		JSONArray frequencyArray = new JSONArray();
-		root.put(key1, frequencyArray);
+	private void addStats(JsonObject root, String key1, Map sorted) {
+		JsonArray frequencyArray = new JsonArray();
+		root.add(key1, frequencyArray);
 		for (Object key : sorted.keySet()) {
 			Object v = sorted.get(key);
-			JSONObject singlediff = new JSONObject();
-			singlediff.put("c", key);
-			singlediff.put("f", v);
+			JsonObject singlediff = new JsonObject();
+			singlediff.addProperty("c", key.toString());
+			singlediff.addProperty("f", v.toString());
 			frequencyArray.add(singlediff);
 		}
 	}

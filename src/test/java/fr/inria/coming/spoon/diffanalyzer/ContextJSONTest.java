@@ -9,10 +9,11 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-import org.json.simple.JSONObject;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.gson.JsonObject;
 
 import fr.inria.coming.core.engine.files.BugFixRunner;
 import fr.inria.coming.core.engine.files.DiffICSE15ContextAnalyzer;
@@ -52,7 +53,7 @@ public class ContextJSONTest {
 		DiffICSE15ContextAnalyzer analyzer = new DiffICSE15ContextAnalyzer();
 		Map<String, Diff> opsByFile = new HashMap<>();
 		opsByFile.put("filetest", diffInsert);
-		JSONObject js = analyzer.calculateCntxJSON("filetest", opsByFile);
+		JsonObject js = analyzer.calculateCntxJSON("filetest", opsByFile);
 		System.out.println("out:\n" + js);
 
 		for (Operation operation : opsr) {
@@ -75,7 +76,7 @@ public class ContextJSONTest {
 		DiffICSE15ContextAnalyzer analyzer = new DiffICSE15ContextAnalyzer();
 		Map<String, Diff> opsByFile = new HashMap<>();
 		opsByFile.put("filetest", diffRemove);
-		JSONObject js = analyzer.calculateCntxJSON("filetest", opsByFile);
+		JsonObject js = analyzer.calculateCntxJSON("filetest", opsByFile);
 		System.out.println("out:\n" + js);
 
 		for (Operation operation : opsr) {
