@@ -130,8 +130,7 @@ public class BugFixRunner {
 				continue;
 
 			String pathname = fileModif.getAbsolutePath() + File.separator + difffile.getName() + "_"
-					+ fileModif.getName() // + "_" + i_hunk
-			;
+					+ fileModif.getName(); // + "_" + i_hunk;
 			File previousVersion = new File(pathname + "_s.java");
 			if (!previousVersion.exists()) {
 				break;

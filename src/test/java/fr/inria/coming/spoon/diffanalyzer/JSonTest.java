@@ -471,6 +471,157 @@ public class JSonTest {
 	}
 
 	@Test
+	public void testD4JMath75() throws Exception {
+		String diffId = "Math_75";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected");
+		for (JsonElement jsonElement : affected) {
+			JsonArray affAr = (JsonArray) jsonElement;
+			for (JsonElement aff : affAr) {
+
+				JsonObject jo = (JsonObject) aff;
+				JsonElement elAST = jo.get("ast");
+				// System.out.println("--> AST element: \n" + elAST);
+			}
+		}
+
+	}
+
+	@Test
+	public void testD4JChart3() throws Exception {
+		String diffId = "Chart_3";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected_files");
+		for (JsonElement jsonElement : affected) {
+
+			JsonObject jo = (JsonObject) jsonElement;
+			JsonElement elAST = jo.get("faulty_stmts_ast");
+			System.out.println("--> AST element: \n" + elAST);
+
+		}
+
+	}
+
+	@Test
+	public void testD4JLang1() throws Exception {
+		String diffId = "Lang_1";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected_files");
+		for (JsonElement jsonElement : affected) {
+
+			JsonObject jo = (JsonObject) jsonElement;
+			JsonElement elAST = jo.get("faulty_stmts_ast");
+			System.out.println("--> AST element: \n" + elAST);
+
+		}
+
+	}
+
+	@Test
+	public void testD4JMath_55() throws Exception {
+		String diffId = "Math_55";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected_files");
+		for (JsonElement jsonElement : affected) {
+
+			JsonObject jo = (JsonObject) jsonElement;
+			JsonElement elAST = jo.get("faulty_stmts_ast");
+			System.out.println("--> AST element: \n" + elAST);
+
+		}
+
+	}
+
+	@Test
+	public void testD4JTime_11() throws Exception {
+		String diffId = "Time_11";
+		ComingProperties.properties.setProperty("MAX_AST_CHANGES_PER_FILE", "200");
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected_files");
+		for (JsonElement jsonElement : affected) {
+
+			JsonObject jo = (JsonObject) jsonElement;
+			JsonElement elAST = jo.get("faulty_stmts_ast");
+			System.out.println("--> AST element: \n" + elAST);
+
+		}
+
+	}
+
+	@Test
+	public void testD4JMath_88() throws Exception {
+		String diffId = "Math_88";
+		ComingProperties.properties.setProperty("MAX_AST_CHANGES_PER_FILE", "200");
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected");
+		for (JsonElement jsonElement : affected) {
+			JsonArray affAr = (JsonArray) jsonElement;
+			for (JsonElement aff : affAr) {
+
+				JsonObject jo = (JsonObject) aff;
+				JsonElement elAST = jo.get("ast");
+				System.out.println("--> AST element: \n" + elAST);
+			}
+		}
+
+	}
+
+	@Test
+	public void testD4JChart4() throws Exception {
+		String diffId = "Chart_4";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		System.out.println(resultjson);
+		// assertTrue(resultjson.get("patterns"))
+
+		JsonArray affected = (JsonArray) resultjson.get("affected_files");
+		for (JsonElement jsonElement : affected) {
+
+			JsonObject jo = (JsonObject) jsonElement;
+			JsonElement elAST = jo.get("faulty_stmts_ast");
+			System.out.println("--> AST element: \n" + elAST);
+
+		}
+
+	}
+
+	@Test
 	public void testFailingTimeoutCase_1555_Move_new() throws Exception {
 		String diffId = "1555";
 
@@ -545,6 +696,7 @@ public class JSonTest {
 		ComingProperties.properties.setProperty("max_synthesis_step", "100000");
 		DiffICSE15ContextAnalyzer analyzer = new DiffICSE15ContextAnalyzer();
 
+		@SuppressWarnings("unused")
 		JsonArray arrayout = analyzer.processDiff(new MapCounter<>(), new MapCounter<>(), fileInput);
 
 		Map<String, Diff> diffOfcommit = analyzer.getDiffOfcommit();

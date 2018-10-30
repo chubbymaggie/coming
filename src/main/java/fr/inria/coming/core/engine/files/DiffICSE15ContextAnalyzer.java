@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.github.gumtreediff.actions.model.Action;
+import com.github.gumtreediff.actions.model.Addition;
 import com.github.gumtreediff.actions.model.Move;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
@@ -46,6 +47,7 @@ import gumtree.spoon.diff.operations.Operation;
 import gumtree.spoon.diff.operations.UpdateOperation;
 import spoon.reflect.code.CtBlock;
 import spoon.reflect.code.CtStatement;
+import spoon.reflect.declaration.CtClass;
 import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtExecutable;
 import spoon.reflect.declaration.CtField;
@@ -225,15 +227,8 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 	public JsonObject calculateCntxJSON(String id, Map<String, Diff> operations) {
 		JsonObject statsjsonRoot = new JsonObject();
 		statsjsonRoot.addProperty("diffid", id);
-		// JsonArray sublistJSon = new JsonArray();
-		// statsjsonRoot.add("info", sublistJSon);
-		JsonArray patternlistJSon = new JsonArray();
-		statsjsonRoot.add("patterns", patternlistJSon);
-		JsonArray repairActionslistJSon = new JsonArray();
-		statsjsonRoot.add("repairactions", repairActionslistJSon);
-
-		JsonArray affectedlistJSon = new JsonArray();
-		statsjsonRoot.add("affected", affectedlistJSon);
+		JsonArray filesArray = new JsonArray();
+		statsjsonRoot.add("affected_files", filesArray);
 
 		for (String modifiedFile : operations.keySet()) {
 			MapList<Operation, String> patternsPerOp = new MapList<>();
@@ -246,7 +241,11 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			// Patterns:
 
-			JsonObject patternFile = new JsonObject();
+			JsonObject fileModified = new JsonObject();
+
+			fileModified.addProperty("file", modifiedFile);
+			filesArray.add(fileModified);
+
 			Config config = new Config();
 			EditScriptBasedDetector.preprocessEditScript(diff);
 			RepairPatternDetector detector = new RepairPatternDetector(config, diff);
@@ -256,7 +255,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			for (String featureName : rp.getFeatureNames()) {
 				int counter = rp.getFeatureCounter(featureName);
 				patterns.addProperty(featureName, counter);
-				JsonArray opsFeature = new JsonArray();
 
 				List<Operation> opsfeature = rp.getOperationsPerFeature().get(featureName);
 				if (opsfeature == null || opsfeature.isEmpty())
@@ -269,11 +267,9 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 				}
 			}
 
-			patternFile.add("repairpatterns", patterns);
-			patternFile.addProperty("file", modifiedFile);
-			patternlistJSon.add(patternFile);
+			fileModified.add("repairpatterns", patterns);
+
 			/// Repair actions
-			JsonObject repairActionFile = new JsonObject();
 			JsonObject repairactions = new JsonObject();
 			RepairActionDetector pa = new RepairActionDetector(config, diff);
 			RepairActions as = pa.analyze();
@@ -292,15 +288,14 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 				}
 			}
 
-			repairActionFile.add("repairactions", repairactions);
-			repairActionFile.addProperty("file", modifiedFile);
-			repairActionslistJSon.add(repairActionFile);
+			fileModified.add("repairactions", repairactions);
+			// repairActionslistJSon.add(repairActionFile);
 			// End repair actions
 
 			List<CtElement> analyzedelements = new ArrayList();
-			JsonArray patternarray = new JsonArray();
+			JsonArray changesarray = new JsonArray();
 			// patternFile.add("patterninstances", patternarray);
-			affectedlistJSon.add(patternarray);
+			fileModified.add("changes_info", changesarray);
 			for (Operation op : operationsFromFile) {
 				if (!analyzedelements.contains(op.getNode())) {
 					analyzedelements.add(op.getNode());
@@ -322,23 +317,23 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 					setPatchInformation(op, cresolver, opContext, diff);
 
 					//
-					JsonObject jo = calculateJSONAffectedStatement(diff, op, patternsPerOp, repairactionPerOp);
-					opContext.add("ast", jo);
+					// JsonObject jo = calculateJSONAffectedStatement(diff, op, patternsPerOp,
+					// repairactionPerOp);
 
-					patternarray.add(opContext);
+					// opContext.add("ast", jo);
 
-					// if (jo != null) {
-					// patternarray.add(jo);
-					// }
+					changesarray.add(opContext);
+
 				} else {
-					// System.out.println("Alr");
 				}
 			}
+			/// ---
+
+			JsonArray ast_arrays = calculateJSONAffectedStatementList(diff, operationsFromFile, patternsPerOp,
+					repairactionPerOp);
+			fileModified.add("faulty_stmts_ast", ast_arrays);
 
 		}
-		// System.out.println("-->" + statsjsonRoot);
-
-		// for each faulty statement, attach repair actions and pattern affected
 
 		return statsjsonRoot;
 
@@ -393,18 +388,16 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
-			List lp = new ArrayList();
-			CtElement oldParentLocationInsertStmt = getStmtParent(affectedMoved);
+			ITree affected = getParentInSource(diff, movop.getAction());
 
-			lp.add(cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-			CtElement newParentLocationInsertStmt = getStmtParent(movop.getParent());
-			if (oldParentLocationInsertStmt != newParentLocationInsertStmt) {
+			ITree targetTreeParentNode = getParent(affected);
 
-				lp.add(cresolver.retrieveBuggyInfo(newParentLocationInsertStmt));
+			if (targetTreeParentNode != null) {
+				CtElement oldParentLocationInsertStmt = (CtElement) targetTreeParentNode.getMetadata("spoon_object");
 
+				bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
+						cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
 			}
-
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT, lp);
 
 		} else if (operation instanceof InsertOperation)
 
@@ -445,6 +438,10 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			System.out.println("Operation not known: " + operation.getClass().getSimpleName());
 
 	}
+//////
+	// ---
+	// ---
+	////////
 
 	@SuppressWarnings({ "unchecked", "unused", "rawtypes" })
 	private void setPatchInformation(Operation operation, CntxResolver cresolver, JsonObject opContext, Diff diff) {
@@ -465,35 +462,21 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
-			// Parent in DST were we put
+			ITree parentInRight = getParentInRight(diff, ma);
 
-			List lp = new ArrayList();
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT, lp);
-
-			CtElement parentMovedElementInDst = searchMapped(mappings, newParentSRC);
-			CtElement newLocationInDst = null;
-			if (parentMovedElementInDst != null) {
-				newLocationInDst = getStmtParent(parentMovedElementInDst);
-				lp.add(cresolver.retrieveBuggyInfo(newLocationInDst));
-			}
-
-			// parent in dst were it was.
-
-			CtElement oldParentInDst = searchMapped(mappings, ma.getNode().getParent());
-			if (oldParentInDst != null) {
-				CtElement oldParentLocationInsertStmt = getStmtParent(oldParentInDst);
-				if (oldParentLocationInsertStmt != newLocationInDst)
-					lp.add(cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-			}
+			CtElement parentMovedElementInDst = getStmtParent((CtElement) parentInRight.getMetadata("spoon_object"));// searchMapped(mappings,
+																														// parentInRight);
+			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
+					cresolver.retrieveBuggyInfo(parentMovedElementInDst));
 
 		} else if (operation instanceof InsertOperation)
 
 		{
 			InsertOperation op = (InsertOperation) operation;
-			CtElement newLocation = op.getSrcNode();
-			CtElement newParentLocationInsertStmt = getStmtParent(newLocation);
+			CtElement affectedElement = op.getSrcNode();
+			CtElement newParentLocationInsertStmt = getStmtParent(affectedElement);
 
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(newLocation));
+			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedElement));
 			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
 					cresolver.retrieveBuggyInfo(newParentLocationInsertStmt));
 			bugContext.getInformation().put(CNTX_Property.OPERATION, "INS");
@@ -536,20 +519,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 		else
 			System.out.println("Operation not known: " + operation.getClass().getSimpleName());
 
-	}
-
-	private CtElement searchMapped(MappingStore mappings, ITree newParentSRC) {
-		ITree mappedParentDst = null;
-		do {
-			mappedParentDst = mappings.getDst(newParentSRC);
-			newParentSRC = newParentSRC.getParent();
-		} while (mappedParentDst == null && newParentSRC != null);
-
-		if (mappedParentDst == null)
-			return null;
-
-		CtElement parentMovedElementInDst = (CtElement) mappedParentDst.getMetadata("spoon_object");
-		return parentMovedElementInDst;
 	}
 
 	private CtElement getStmtParent(CtElement element) {
@@ -600,37 +569,186 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 	}
 
-	public JsonObject calculateJSONAffectedStatement(Diff diff, Operation operation,
+	public JsonArray calculateJSONAffectedStatementList(Diff diff, List<Operation> operations,
 			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp) {
 
-		CtMethod methodOfOperation = operation.getNode().getParent(CtMethod.class);
 		Json4SpoonGenerator jsongen = new Json4SpoonGenerator();
 
-		Action affectedAction = operation.getAction();
-		ITree affected = affectedAction.getNode();
+		List<ITree> allparents = new ArrayList<>();
+		for (Operation operation : operations) {
 
-		ITree targetTreeNode = null;
-		do {
-			CtElement relatedCtElement = (CtElement) affected.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+			Action affectedAction = operation.getAction();
+			// ITree affected = affectedAction.getNode();
+			ITree affected = getParentInSource(diff, affectedAction);
 
-			if (relatedCtElement instanceof CtExecutable || relatedCtElement instanceof CtStatement
-					|| relatedCtElement instanceof CtField) {
-				targetTreeNode = affected;
+			ITree targetTreeParentNode = getParent(affected);
+
+			if (targetTreeParentNode != null) {
+				if (!allparents.contains(targetTreeParentNode)) {
+					allparents.add(targetTreeParentNode);
+				}
+				if (operation instanceof InsertOperation) {
+					InsertOperation insert = (InsertOperation) operation;
+					int pos = insert.getAction().getPosition();
+					if (insert.getAction().getParent().getChildren().size() > pos)
+						insert.getAction().getParent().insertChild(insert.getAction().getNode(), pos);
+					else {
+						insert.getAction().getParent().addChild(insert.getAction().getNode());
+					}
+				}
+
 			}
-			affected = affected.getParent();
-		} while (targetTreeNode == null && affected.getParent() != null);
+		}
 
 		List<NodePainter> painters = new ArrayList();
 		painters.add(new PatternPainter(patternsPerOp, "patterns"));
 		painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
 		painters.add(new OperationNodePainter(diff.getAllOperations()));
 
+		JsonArray ast_affected = new JsonArray();
+		for (ITree iTree : allparents) {
+			JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), iTree, painters);
+			ast_affected.add(jsonT);
+		}
+		return ast_affected;
+	}
+
+	private ITree getParentInSource(Diff diff, Action affectedAction) {
+		ITree affected = null;
+		if (affectedAction instanceof Addition) {
+
+			ITree parentInRight = diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
+			if (parentInRight != null)
+				return diff.getMappingsComp().getSrc(parentInRight);
+			else {
+				return diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
+			}
+
+		} else {
+			// We are in left
+			affected = affectedAction.getNode().getParent();
+		}
+
+		return affected;
+	}
+
+	private ITree getParentInRight(Diff diff, Action affectedAction) {
+		ITree affected = null;
+		if (affectedAction instanceof Addition) {
+
+			ITree parentInLeft = diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
+			if (parentInLeft != null)
+				return diff.getMappingsComp().getDst(parentInLeft);
+			else {
+				return diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
+			}
+
+			// we could be in left or right
+			// ITree dstMappedParent =
+			// diff.getMappingsComp().getDst(affectedAction.getNode().getParent());
+			// if (dstMappedParent != null) {
+			// we are in left, and the element is mapped to right
+			// we return the right
+			// return dstMappedParent;
+			// }
+		}
+		// We are in left
+		affected = affectedAction.getNode().getParent();
+
+		return affected;
+	}
+
+	public JsonObject calculateJSONAffectedStatement(Diff diff, Operation operation,
+			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp) {
+
+		Json4SpoonGenerator jsongen = new Json4SpoonGenerator();
+
+		List<NodePainter> painters = new ArrayList();
+		painters.add(new PatternPainter(patternsPerOp, "patterns"));
+		painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
+		painters.add(new OperationNodePainter(diff.getAllOperations()));
+
+		ITree targetTreeNode = null;
+		Action affectedAction = operation.getAction();
+		ITree affected = affectedAction.getNode();
+
+		targetTreeNode = getParent(affected);
+
 		if (targetTreeNode != null) {
+
+			if (operation instanceof InsertOperation) {
+				InsertOperation insert = (InsertOperation) operation;
+				insert.getAction().getParent().insertChild(insert.getAction().getNode(),
+						insert.getAction().getPosition());
+
+			}
+
 			JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), targetTreeNode,
 					painters);
 			return jsonT;
 		}
 		return null;
+	}
+
+	private ITree getParent(ITree affected) {
+		ITree parent = getParentStatement(affected);
+		if (parent == null) {
+			parent = getParentExecutable(affected);
+			if (parent == null)
+				parent = getParentField(affected);
+
+		}
+		return parent;
+	}
+
+	private ITree getParentExecutable(ITree affected) {
+		ITree targetTreeNode = null;
+		CtElement relatedCtElement = null;
+		do {
+			relatedCtElement = (CtElement) affected.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+
+			if (relatedCtElement instanceof CtExecutable) {
+				targetTreeNode = affected;
+			}
+			affected = affected.getParent();
+		} while ((targetTreeNode == null && affected.getParent() != null));
+
+		return targetTreeNode;
+	}
+
+	private ITree getParentField(ITree affected) {
+		ITree targetTreeNode = null;
+		CtElement relatedCtElement = null;
+		do {
+			relatedCtElement = (CtElement) affected.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+
+			if (relatedCtElement instanceof CtField) {
+				targetTreeNode = affected;
+
+			}
+			affected = affected.getParent();
+		} while ((targetTreeNode == null && affected.getParent() != null));
+
+		return targetTreeNode;
+	}
+
+	private ITree getParentStatement(ITree affected) {
+		ITree targetTreeNode = null;
+		CtElement targetCtElement = null;
+		CtElement relatedCtElement = null;
+		do {
+			relatedCtElement = (CtElement) affected.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+
+			if (relatedCtElement instanceof CtStatement && !(relatedCtElement instanceof CtClass)) {
+				targetTreeNode = affected;
+				targetCtElement = relatedCtElement;
+			}
+			affected = affected.getParent();
+		} while ((targetTreeNode == null && affected.getParent() != null) || (relatedCtElement != null
+				&& relatedCtElement.getParent() instanceof CtStatement && !(relatedCtElement instanceof CtBlock)));
+
+		// System.out.println("target statement: " + targetCtElement);
+		return targetTreeNode;
 	}
 
 	static List emptyList = new ArrayList();
