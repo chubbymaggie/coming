@@ -4,8 +4,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -16,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.actions.model.Addition;
 import com.github.gumtreediff.actions.model.Move;
+import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 import com.google.gson.Gson;
@@ -23,6 +26,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import add.entities.PatternInstance;
 import add.entities.RepairActions;
 import add.entities.RepairPatterns;
 import add.features.detector.EditScriptBasedDetector;
@@ -137,6 +141,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 		} catch (InterruptedException e) { // <-- possible error cases
 			System.out.println("job was interrupted");
 		} catch (ExecutionException e) {
+			e.printStackTrace();
 			System.out.println("caught exception: " + e.getCause());
 		} catch (TimeoutException e) {
 			System.out.println("timeout context analyzed.");
@@ -233,6 +238,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 		for (String modifiedFile : operations.keySet()) {
 			MapList<Operation, String> patternsPerOp = new MapList<>();
 			MapList<Operation, String> repairactionPerOp = new MapList<>();
+			List<PatternInstance> patternInstances = new ArrayList<>();
 
 			Diff diff = operations.get(modifiedFile);
 			List<Operation> operationsFromFile = diff.getRootOperations();
@@ -250,6 +256,10 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			EditScriptBasedDetector.preprocessEditScript(diff);
 			RepairPatternDetector detector = new RepairPatternDetector(config, diff);
 			RepairPatterns rp = detector.analyze();
+
+			for (List<PatternInstance> pi : rp.getPatternInstances().values()) {
+				patternInstances.addAll(pi);
+			}
 
 			JsonObject patterns = new JsonObject();
 			for (String featureName : rp.getFeatureNames()) {
@@ -316,12 +326,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 					setPatchInformation(op, cresolver, opContext, diff);
 
-					//
-					// JsonObject jo = calculateJSONAffectedStatement(diff, op, patternsPerOp,
-					// repairactionPerOp);
-
-					// opContext.add("ast", jo);
-
 					changesarray.add(opContext);
 
 				} else {
@@ -330,7 +334,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			/// ---
 
 			JsonArray ast_arrays = calculateJSONAffectedStatementList(diff, operationsFromFile, patternsPerOp,
-					repairactionPerOp);
+					repairactionPerOp, patternInstances);
 			fileModified.add("faulty_stmts_ast", ast_arrays);
 
 		}
@@ -569,8 +573,78 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 	}
 
+	/**
+	 * Only AST for pattern
+	 * 
+	 * @param diff
+	 * @param operations
+	 * @param patternsPerOp
+	 * @param repairactionPerOp
+	 * @param patternInstances
+	 * @return
+	 */
 	public JsonArray calculateJSONAffectedStatementList(Diff diff, List<Operation> operations,
-			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp) {
+			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp,
+			List<PatternInstance> patternInstances) {
+
+		Json4SpoonGenerator jsongen = new Json4SpoonGenerator();
+
+		Set<ITree> allparents = new HashSet<>();
+		for (PatternInstance patternInstance : patternInstances) {
+
+			Operation operation = patternInstance.getOp();
+
+			List<CtElement> faulties = patternInstance.getFaulty();
+
+			ITree affectedByOperator = getParentInSource(diff, operation.getAction());
+			ITree nodeFaulty = null;
+
+			for (CtElement faulty : faulties) {
+
+				for (ITree ctree : affectedByOperator.getDescendants()) {
+
+					Object metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+
+					if (ctree.hasLabel() && metadata != null && metadata.equals(faulty)) {
+						nodeFaulty = ctree;
+						break;
+					}
+				}
+				if (nodeFaulty == null) {
+					for (Mapping ms : diff.getMappingsComp().asSet()) {
+						Object metadata = ms.getFirst().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+						if (ms.getFirst().hasLabel() && metadata != null && metadata.equals(faulty)) {
+							nodeFaulty = ms.getFirst();
+							break;
+						}
+					}
+				}
+
+				if (nodeFaulty != null) {
+					allparents.add(nodeFaulty);
+				} else {
+					System.out.println("Error nodefaulty null");
+				}
+			}
+		}
+
+		List<NodePainter> painters = new ArrayList();
+		painters.add(new PatternPainter(patternsPerOp, "patterns"));
+		painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
+		painters.add(new OperationNodePainter(diff.getAllOperations()));
+		painters.add(new FaultyElementPatternPainter(patternInstances));
+
+		JsonArray ast_affected = new JsonArray();
+		for (ITree iTree : allparents) {
+			JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), iTree, painters);
+			ast_affected.add(jsonT);
+		}
+		return ast_affected;
+	}
+
+	public JsonArray calculateJSONAffectedStatementListOLD(Diff diff, List<Operation> operations,
+			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp,
+			List<PatternInstance> patternInstances) {
 
 		Json4SpoonGenerator jsongen = new Json4SpoonGenerator();
 
@@ -587,16 +661,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 				if (!allparents.contains(targetTreeParentNode)) {
 					allparents.add(targetTreeParentNode);
 				}
-				if (operation instanceof InsertOperation) {
-					InsertOperation insert = (InsertOperation) operation;
-					int pos = insert.getAction().getPosition();
-					if (insert.getAction().getParent().getChildren().size() > pos)
-						insert.getAction().getParent().insertChild(insert.getAction().getNode(), pos);
-					else {
-						insert.getAction().getParent().addChild(insert.getAction().getNode());
-					}
-				}
-
 			}
 		}
 
@@ -604,6 +668,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 		painters.add(new PatternPainter(patternsPerOp, "patterns"));
 		painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
 		painters.add(new OperationNodePainter(diff.getAllOperations()));
+		painters.add(new FaultyElementPatternPainter(patternInstances));
 
 		JsonArray ast_affected = new JsonArray();
 		for (ITree iTree : allparents) {

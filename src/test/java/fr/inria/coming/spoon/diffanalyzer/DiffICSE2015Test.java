@@ -61,6 +61,24 @@ public class DiffICSE2015Test {
 	}
 
 	@Test
+	public void testFailingTChart_21() throws Exception {
+		String diffId = "Chart_21";
+
+		String out = "/Users/matias/develop/CodeRep-data/processed_d4J/";
+		DiffICSE15ContextAnalyzer analyzer = new DiffICSE15ContextAnalyzer(out);
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/";
+		ComingProperties.properties.setProperty("icse15difffolder", input);
+
+		File fileDiff = new File(ComingProperties.getProperty("icse15difffolder") + "/" + diffId);
+		JsonArray arrayout = analyzer.processDiff(new MapCounter<>(), new MapCounter<>(), fileDiff);
+
+		assertTrue(arrayout.size() > 0);
+
+		analyzer.atEndCommit(fileDiff);
+
+	}
+
+	@Test
 	public void testFailingTimeoutCase_1555_Move() throws Exception {
 		String diffId = "1555";
 		ConfigurationProperties.setProperty("max_synthesis_step", "100000");

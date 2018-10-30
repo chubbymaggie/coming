@@ -2,6 +2,7 @@ package fr.inria.coming.spoon.diffanalyzer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -607,18 +608,269 @@ public class JSonTest {
 		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
 		JsonObject resultjson = getContext(diffId, input);
 
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jchart18() throws Exception {
+		String diffId = "Chart_18";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jlang31() throws Exception {
+		String diffId = "Lang_31";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jclosure2() throws Exception {
+		String diffId = "Closure_2";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jlang33() throws Exception {
+		String diffId = "Lang_33";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jclosure111() throws Exception {
+		String diffId = "Closure_111";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jchart21() throws Exception {
+		String diffId = "Chart_21";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
+	public void testD4Jlang17() throws Exception {
+		String diffId = "Lang_17";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+		// See multiple susp
+	}
+
+	@Test
+	public void testD4Jmath46() throws Exception {
+		String diffId = "Math_46";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jtime18() throws Exception {
+		String diffId = "time_18";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jclosure83() throws Exception {
+		String diffId = "Closure_83";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jmath60() throws Exception {
+		String diffId = "Math_60";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jlang13() throws Exception {
+		String diffId = "Lang_13";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jchart10() throws Exception {
+		String diffId = "Chart_10";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jchart12() throws Exception {
+		String diffId = "Chart_12";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jmath105() throws Exception {
+		String diffId = "Math_105";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Jtime8() throws Exception {
+		String diffId = "time_8";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	@Ignore
+	public void testD4Jmockito14() throws Exception {
+		String diffId = "time_8";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	@Ignore
+	public void testD4Jmath27() throws Exception {
+		String diffId = "Math_27";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4closure124() throws Exception {
+		String diffId = "Closure_124";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+	@Test
+	public void testD4Math_7() throws Exception {
+		String diffId = "Math_7";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+	}
+
+//	time17()
+//	closure124()
+//	math7()
+
+	private void showAST(JsonObject resultjson) {
 		System.out.println(resultjson);
-		// assertTrue(resultjson.get("patterns"))
 
 		JsonArray affected = (JsonArray) resultjson.get("affected_files");
 		for (JsonElement jsonElement : affected) {
 
 			JsonObject jo = (JsonObject) jsonElement;
 			JsonElement elAST = jo.get("faulty_stmts_ast");
-			System.out.println("--> AST element: \n" + elAST);
+			assertNotNull(elAST);
+			assertTrue(elAST instanceof JsonArray);
+			JsonArray ar = (JsonArray) elAST;
+			assertTrue(ar.size() > 0);
+			// System.out.println("--> AST element: \n" + elAST);
+			for (JsonElement suspiciousTree : ar) {
+				System.out.println("--> AST element: \n" + suspiciousTree);
+				assertTrue(printSusp(suspiciousTree));
+			}
 
 		}
+	}
 
+	private boolean printSusp(JsonElement ob) {
+		boolean t = false;
+		if (ob instanceof JsonObject) {
+			JsonObject jon = ob.getAsJsonObject();
+			for (String s : jon.keySet()) {
+				if (s.equals("susp")) {
+					System.out.println("susp--> " + ob);
+					t = true;
+				} else {
+
+					JsonElement e = jon.get(s);
+					if (e instanceof JsonArray) {
+						JsonArray arr = e.getAsJsonArray();
+						for (JsonElement jsonElement : arr) {
+							if (printSusp(jsonElement)) {
+								t = true;
+							}
+						}
+					}
+
+				}
+
+			}
+		}
+		return t;
 	}
 
 	@Test
