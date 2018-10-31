@@ -679,6 +679,17 @@ public class JSonTest {
 	}
 
 	@Test
+	public void testD4JTime5() throws Exception {
+		String diffId = "Time_5";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = getContext(diffId, input);
+
+		showAST(resultjson);
+
+	}
+
+	@Test
 	public void testD4Jlang17() throws Exception {
 		String diffId = "Lang_17";
 
@@ -832,15 +843,20 @@ public class JSonTest {
 		for (JsonElement jsonElement : affected) {
 
 			JsonObject jo = (JsonObject) jsonElement;
-			JsonElement elAST = jo.get("faulty_stmts_ast");
+			// JsonElement elAST = jo.get("faulty_stmts_ast");
+			JsonElement elAST = jo.get("pattern_instances");
+
 			assertNotNull(elAST);
 			assertTrue(elAST instanceof JsonArray);
 			JsonArray ar = (JsonArray) elAST;
 			assertTrue(ar.size() > 0);
 			// System.out.println("--> AST element: \n" + elAST);
 			for (JsonElement suspiciousTree : ar) {
-				System.out.println("--> AST element: \n" + suspiciousTree);
-				assertTrue(printSusp(suspiciousTree));
+
+				JsonObject jso = suspiciousTree.getAsJsonObject();
+				System.out.println("--> AST element: \n" + jso.get("pattern_name"));
+				assertTrue(printSusp(jso.get("faulty_ast")));
+
 			}
 
 		}
@@ -857,17 +873,21 @@ public class JSonTest {
 				} else {
 
 					JsonElement e = jon.get(s);
-					if (e instanceof JsonArray) {
-						JsonArray arr = e.getAsJsonArray();
-						for (JsonElement jsonElement : arr) {
-							if (printSusp(jsonElement)) {
-								t = true;
-							}
-						}
+					boolean t1 = printSusp(e);
+					if (t1) {
+						return true;
 					}
-
 				}
 
+			}
+		} else {
+			if (ob instanceof JsonArray) {
+				JsonArray arr = ob.getAsJsonArray();
+				for (JsonElement jsonElement : arr) {
+					if (printSusp(jsonElement)) {
+						t = true;
+					}
+				}
 			}
 		}
 		return t;

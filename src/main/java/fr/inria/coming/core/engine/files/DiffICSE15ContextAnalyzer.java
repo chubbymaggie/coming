@@ -335,7 +335,8 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			JsonArray ast_arrays = calculateJSONAffectedStatementList(diff, operationsFromFile, patternsPerOp,
 					repairactionPerOp, patternInstances);
-			fileModified.add("faulty_stmts_ast", ast_arrays);
+			// fileModified.add("faulty_stmts_ast", ast_arrays);
+			fileModified.add("pattern_instances", ast_arrays);
 
 		}
 
@@ -589,9 +590,10 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 		Json4SpoonGenerator jsongen = new Json4SpoonGenerator();
 
-		Set<ITree> allparents = new HashSet<>();
-		for (PatternInstance patternInstance : patternInstances) {
+		JsonArray ast_affected = new JsonArray();
 
+		for (PatternInstance patternInstance : patternInstances) {
+			Set<ITree> allparents = new HashSet<>();
 			Operation operation = patternInstance.getOp();
 
 			List<CtElement> faulties = patternInstance.getFaulty();
@@ -603,17 +605,18 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 				for (ITree ctree : affectedByOperator.getDescendants()) {
 
-					Object metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
-
-					if (ctree.hasLabel() && metadata != null && metadata.equals(faulty)) {
+					if (isIn(faulty, ctree)) {
 						nodeFaulty = ctree;
 						break;
 					}
 				}
 				if (nodeFaulty == null) {
 					for (Mapping ms : diff.getMappingsComp().asSet()) {
-						Object metadata = ms.getFirst().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
-						if (ms.getFirst().hasLabel() && metadata != null && metadata.equals(faulty)) {
+						// Object metadata =
+						// ms.getFirst().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+						// if (ms.getFirst().hasLabel() && metadata != null && metadata.equals(faulty))
+						// {
+						if (isIn(faulty, ms.getFirst())) {
 							nodeFaulty = ms.getFirst();
 							break;
 						}
@@ -626,20 +629,40 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 					System.out.println("Error nodefaulty null");
 				}
 			}
+
+			List<NodePainter> painters = new ArrayList();
+			painters.add(new PatternPainter(patternsPerOp, "patterns"));
+			painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
+			painters.add(new OperationNodePainter(diff.getAllOperations()));
+			painters.add(new FaultyElementPatternPainter(patternInstances));
+
+			JsonObject jsonInstance = new JsonObject();
+			JsonArray affected = new JsonArray();
+			for (ITree iTree : allparents) {
+				JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), iTree, painters);
+				affected.add(jsonT);
+			}
+			jsonInstance.add("faulty_ast", affected);
+			jsonInstance.addProperty("pattern_name", patternInstance.getPatternName());
+			ast_affected.add(jsonInstance);
 		}
 
-		List<NodePainter> painters = new ArrayList();
-		painters.add(new PatternPainter(patternsPerOp, "patterns"));
-		painters.add(new PatternPainter(repairactionPerOp, "repairactions"));
-		painters.add(new OperationNodePainter(diff.getAllOperations()));
-		painters.add(new FaultyElementPatternPainter(patternInstances));
-
-		JsonArray ast_affected = new JsonArray();
-		for (ITree iTree : allparents) {
-			JsonObject jsonT = jsongen.getJSONwithCustorLabels(((DiffImpl) diff).getContext(), iTree, painters);
-			ast_affected.add(jsonT);
-		}
 		return ast_affected;
+
+	}
+
+	private boolean isIn(CtElement faulty, ITree ctree) {
+		Object metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
+
+		boolean save = ctree.hasLabel() && metadata != null && metadata.equals(faulty);
+		if (save)
+			return true;
+
+		metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
+
+		save = metadata != null && metadata.equals(faulty);
+
+		return save;
 	}
 
 	public JsonArray calculateJSONAffectedStatementListOLD(Diff diff, List<Operation> operations,
