@@ -596,10 +596,22 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			Set<ITree> allparents = new HashSet<>();
 			Operation operation = patternInstance.getOp();
 
-			List<CtElement> faulties = patternInstance.getFaulty();
+			List<CtElement> faulties = null;
 
 			ITree affectedByOperator = getParentInSource(diff, operation.getAction());
 			ITree nodeFaulty = null;
+
+			if (patternInstance.getFaultyLine() != null) {
+				faulties = new ArrayList<>();
+				faulties.add(patternInstance.getFaultyLine());
+			} else {
+				if (patternInstance.getFaulty() != null)
+					faulties = patternInstance.getFaulty();
+				else {
+					// operation.getAction().
+
+				}
+			}
 
 			for (CtElement faulty : faulties) {
 
@@ -612,10 +624,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 				}
 				if (nodeFaulty == null) {
 					for (Mapping ms : diff.getMappingsComp().asSet()) {
-						// Object metadata =
-						// ms.getFirst().getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
-						// if (ms.getFirst().hasLabel() && metadata != null && metadata.equals(faulty))
-						// {
 						if (isIn(faulty, ms.getFirst())) {
 							nodeFaulty = ms.getFirst();
 							break;
