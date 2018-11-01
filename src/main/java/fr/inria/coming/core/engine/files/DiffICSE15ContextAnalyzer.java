@@ -16,9 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.actions.model.Addition;
 import com.github.gumtreediff.actions.model.Move;
-import com.github.gumtreediff.matchers.Mapping;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.tree.ITree;
 import com.google.gson.Gson;
@@ -31,6 +29,7 @@ import add.entities.RepairActions;
 import add.entities.RepairPatterns;
 import add.features.detector.EditScriptBasedDetector;
 import add.features.detector.repairactions.RepairActionDetector;
+import add.features.detector.repairpatterns.MappingAnalysis;
 import add.features.detector.repairpatterns.RepairPatternDetector;
 import add.main.Config;
 import fr.inria.astor.core.entities.CNTX_Property;
@@ -393,7 +392,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
-			ITree affected = getParentInSource(diff, movop.getAction());
+			ITree affected = MappingAnalysis.getParentInSource(diff, movop.getAction());
 
 			ITree targetTreeParentNode = getParent(affected);
 
@@ -467,7 +466,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
-			ITree parentInRight = getParentInRight(diff, ma);
+			ITree parentInRight = MappingAnalysis.getParentInRight(diff, ma);
 
 			CtElement parentMovedElementInDst = getStmtParent((CtElement) parentInRight.getMetadata("spoon_object"));// searchMapped(mappings,
 																														// parentInRight);
@@ -598,8 +597,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			List<CtElement> faulties = null;
 
-			ITree affectedByOperator = getParentInSource(diff, operation.getAction());
-			ITree nodeFaulty = null;
+			ITree affectedByOperator = MappingAnalysis.getParentInSource(diff, operation.getAction());
 
 			if (patternInstance.getFaultyLine() != null) {
 				faulties = new ArrayList<>();
@@ -614,22 +612,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			}
 
 			for (CtElement faulty : faulties) {
-
-				for (ITree ctree : affectedByOperator.getDescendants()) {
-
-					if (isIn(faulty, ctree)) {
-						nodeFaulty = ctree;
-						break;
-					}
-				}
-				if (nodeFaulty == null) {
-					for (Mapping ms : diff.getMappingsComp().asSet()) {
-						if (isIn(faulty, ms.getFirst())) {
-							nodeFaulty = ms.getFirst();
-							break;
-						}
-					}
-				}
+				ITree nodeFaulty = MappingAnalysis.getCorrespondingInSourceTree(diff, affectedByOperator, faulty);
 
 				if (nodeFaulty != null) {
 					allparents.add(nodeFaulty);
@@ -659,20 +642,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 	}
 
-	private boolean isIn(CtElement faulty, ITree ctree) {
-		Object metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT);
-
-		boolean save = ctree.hasLabel() && metadata != null && metadata.equals(faulty);
-		if (save)
-			return true;
-
-		metadata = ctree.getMetadata(SpoonGumTreeBuilder.SPOON_OBJECT_DEST);
-
-		save = metadata != null && metadata.equals(faulty);
-
-		return save;
-	}
-
 	public JsonArray calculateJSONAffectedStatementListOLD(Diff diff, List<Operation> operations,
 			MapList<Operation, String> patternsPerOp, MapList<Operation, String> repairactionPerOp,
 			List<PatternInstance> patternInstances) {
@@ -684,7 +653,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			Action affectedAction = operation.getAction();
 			// ITree affected = affectedAction.getNode();
-			ITree affected = getParentInSource(diff, affectedAction);
+			ITree affected = MappingAnalysis.getParentInSource(diff, affectedAction);
 
 			ITree targetTreeParentNode = getParent(affected);
 
@@ -707,51 +676,6 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			ast_affected.add(jsonT);
 		}
 		return ast_affected;
-	}
-
-	private ITree getParentInSource(Diff diff, Action affectedAction) {
-		ITree affected = null;
-		if (affectedAction instanceof Addition) {
-
-			ITree parentInRight = diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
-			if (parentInRight != null)
-				return diff.getMappingsComp().getSrc(parentInRight);
-			else {
-				return diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
-			}
-
-		} else {
-			// We are in left
-			affected = affectedAction.getNode().getParent();
-		}
-
-		return affected;
-	}
-
-	private ITree getParentInRight(Diff diff, Action affectedAction) {
-		ITree affected = null;
-		if (affectedAction instanceof Addition) {
-
-			ITree parentInLeft = diff.getMappingsComp().firstMappedSrcParent(affectedAction.getNode());
-			if (parentInLeft != null)
-				return diff.getMappingsComp().getDst(parentInLeft);
-			else {
-				return diff.getMappingsComp().firstMappedDstParent(affectedAction.getNode());
-			}
-
-			// we could be in left or right
-			// ITree dstMappedParent =
-			// diff.getMappingsComp().getDst(affectedAction.getNode().getParent());
-			// if (dstMappedParent != null) {
-			// we are in left, and the element is mapped to right
-			// we return the right
-			// return dstMappedParent;
-			// }
-		}
-		// We are in left
-		affected = affectedAction.getNode().getParent();
-
-		return affected;
 	}
 
 	public JsonObject calculateJSONAffectedStatement(Diff diff, Operation operation,
