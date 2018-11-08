@@ -40,7 +40,8 @@ public class DiffICSE2015Test {
 		ConfigurationProperties.setProperty("max_synthesis_step", "100000");
 		ComingProperties.properties.setProperty("max_synthesis_step", "100000");
 		ComingProperties.properties.setProperty("MAX_AST_CHANGES_PER_FILE", "200");
-		String out = "/Users/matias/develop/CodeRep-data/processed_d4J/";
+		String out = "/Users/matias/develop/sketch-repair/git-sketch4repair/diff_analysis/Defects4J";
+		// +"//"/Users/matias/develop/CodeRep-data/processed_d4J/";
 		DiffICSE15ContextAnalyzer analyzer = new DiffICSE15ContextAnalyzer(out);
 		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/";
 		ComingProperties.properties.setProperty("icse15difffolder", input);

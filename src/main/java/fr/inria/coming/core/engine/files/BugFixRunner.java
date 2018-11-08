@@ -133,7 +133,10 @@ public class BugFixRunner {
 					+ fileModif.getName(); // + "_" + i_hunk;
 			File previousVersion = new File(pathname + "_s.java");
 			if (!previousVersion.exists()) {
-				break;
+				pathname = pathname + "_" + i_hunk;
+				previousVersion = new File(pathname + "_s.java");
+				if (!previousVersion.exists())
+					break;
 			}
 
 			JsonObject file = new JsonObject();

@@ -11,6 +11,8 @@ import java.util.Map;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonNull;
@@ -836,9 +838,19 @@ public class JSonTest {
 //	closure124()
 //	math7()
 
-	private void showAST(JsonObject resultjson) {
-		System.out.println(resultjson);
+	public static void showAST(JsonObject resultjson) {
+		assertMarkedlAST(resultjson, null, null, null);
+	}
 
+	public static void assertMarkedlAST(JsonObject resultjson, String patternName, String label, String type) {
+
+		System.out.println("****************");
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		String prettyJsonString = gson.toJson(resultjson);
+
+		// System.out.println(prettyJsonString);
+		boolean found = false;
 		JsonArray affected = (JsonArray) resultjson.get("affected_files");
 		for (JsonElement jsonElement : affected) {
 
@@ -850,30 +862,51 @@ public class JSonTest {
 			assertTrue(elAST instanceof JsonArray);
 			JsonArray ar = (JsonArray) elAST;
 			assertTrue(ar.size() > 0);
+
 			// System.out.println("--> AST element: \n" + elAST);
 			for (JsonElement suspiciousTree : ar) {
 
 				JsonObject jso = suspiciousTree.getAsJsonObject();
 				System.out.println("--> AST element: \n" + jso.get("pattern_name"));
-				assertTrue(printSusp(jso.get("faulty_ast")));
+
+				prettyJsonString = gson.toJson(jso.get("faulty_ast"));
+				System.out.println("suspicious element:\n" + prettyJsonString);
+
+				assertTrue("Equals to []", !jso.get("faulty_ast").toString().equals("[]"));
+				// assertTrue(printSusp(jso.get("faulty_ast"), label, type));
+				if (printSusp(jso.get("faulty_ast"), patternName, label, type)) {
+					found = true;
+				}
 
 			}
 
 		}
+		assertTrue("Node suspicious not found", found);
 	}
 
-	private boolean printSusp(JsonElement ob) {
+	public static boolean printSusp(JsonElement ob, String patternName, String label, String type) {
 		boolean t = false;
 		if (ob instanceof JsonObject) {
 			JsonObject jon = ob.getAsJsonObject();
 			for (String s : jon.keySet()) {
 				if (s.equals("susp")) {
-					System.out.println("susp--> " + ob);
-					t = true;
+					// System.out.println("susp--> " + ob);
+					if (label == null && type == null) {
+
+						t = true;
+						break;
+
+					} else {
+
+						if (label != null && type != null && jon.get("label").getAsString().toString().equals(label)
+								&& jon.get("type").getAsString().toString().equals(type)
+								&& (patternName == null || hasPattern(jon, ("susp_" + patternName))))
+							t = true;
+					}
 				} else {
 
 					JsonElement e = jon.get(s);
-					boolean t1 = printSusp(e);
+					boolean t1 = printSusp(e, patternName, label, type);
 					if (t1) {
 						return true;
 					}
@@ -884,13 +917,58 @@ public class JSonTest {
 			if (ob instanceof JsonArray) {
 				JsonArray arr = ob.getAsJsonArray();
 				for (JsonElement jsonElement : arr) {
-					if (printSusp(jsonElement)) {
+					if (printSusp(jsonElement, patternName, label, type)) {
 						t = true;
 					}
 				}
 			}
 		}
 		return t;
+	}
+
+	public static JsonElement getSusp(JsonElement ob) {
+		if (ob instanceof JsonObject) {
+			JsonObject jon = ob.getAsJsonObject();
+			for (String s : jon.keySet()) {
+				if (s.equals("susp")) {
+					return jon;
+				} else {
+
+					JsonElement e = jon.get(s);
+					JsonElement t1 = getSusp(e);
+					if (t1 != null) {
+						return t1;
+					}
+				}
+
+			}
+		} else {
+			if (ob instanceof JsonArray) {
+				JsonArray arr = ob.getAsJsonArray();
+				for (JsonElement jsonElement : arr) {
+					JsonElement t = getSusp(jsonElement);
+					if (t != null) {
+						return t;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	public static boolean hasPattern(JsonObject jon, String p) {
+
+		// JsonPrimitive p = new JsonPrimitive("susp_" + patternName);
+		// boolean has = false;
+		if (!jon.has("susp"))
+			return false;
+
+		for (JsonElement el : jon.get("susp").getAsJsonArray()) {
+			if (el.getAsString().toString().equals(p))
+				return true;
+		}
+		return false;
+		// return jon.get("susp").getAsJsonArray().contains(p);
 	}
 
 	@Test
@@ -960,7 +1038,7 @@ public class JSonTest {
 
 	}
 
-	private JsonObject getContext(String diffId, String input) {
+	public static JsonObject getContext(String diffId, String input) {
 		File fileInput = new File(input);
 		System.out.println(input);
 
