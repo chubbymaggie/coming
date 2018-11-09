@@ -619,7 +619,8 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			// opContext.addProperty("bug", modifiedFile);
 
 			// opContext.addProperty("key", modifiedFile);
-			Cntx iContext = cresolver.retrieveCntx(patternInstance.getOp().getSrcNode());
+			Cntx iContext = cresolver
+					.retrieveCntx(patternInstance.getFaultyLine()/* patternInstance.getOp().getSrcNode() */);
 			// iContext.setIdentifier(modifiedFile);
 			opContext.add("cntx", iContext.toJSON());
 
