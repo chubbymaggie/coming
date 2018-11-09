@@ -695,6 +695,46 @@ public class VerificationTest {
 	}
 
 	@Test
+	public void testVerificationD4JChart5() throws Exception {
+		String diffId = "Chart_5";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+
+		List<RepairPatterns> patterns = analyze(input);
+		assertTrue(patterns.size() > 0);
+
+		RepairPatterns repairPatterns = patterns.get(0);
+
+		System.out.println(repairPatterns);
+
+		List<PatternInstance> insts = repairPatterns.getPatternInstances().get("expLogicReduce");
+		System.out.println(insts);
+		assertTrue(insts.size() > 0);
+
+		PatternInstance pi1 = insts.get(0);
+		System.out.println(pi1);
+
+		// assertTrue(pi1.getNodeAffectedOp().toString().contains("r != null"));
+		// assertEquals(2, pi1.getFaulty().size());
+
+		assertTrue(pi1.getFaulty().stream().filter(e -> e.toString().equals("(!(this.allowDuplicateXValues))"))
+				.findFirst().isPresent());
+		// assertTrue(pi1.getFaulty().stream().filter(e ->
+		// e.toString().equals("this.allowDuplicateXValues")).findFirst()
+		// .isPresent());
+		assertNotNull(pi1.getFaultyTree());
+		// assertNotNull(pi1.getFaultyTree());
+		assertEquals("(index >= 0) && (!(this.allowDuplicateXValues))", pi1.getFaultyLine().toString());
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+
+		System.out.println("END 1\n" + resultjson.toString());
+		// TODO:
+		// JSonTest.showAST(resultjson, "expLogicExpand", "AND"/* "maximumRangeValue"
+		// */, "BinaryOperator");
+
+	}
+
+	@Test
 	public void testVerificationD4JClosure20() throws Exception {
 		String diffId = "Closure_20";
 
@@ -1787,7 +1827,96 @@ public class VerificationTest {
 
 		System.out.println("Patterns: ");
 		for (RepairPatterns repairPatterns : patterns) {
-			System.out.println("-->" + patterns);
+			System.out.println("-->" + repairPatterns);
+		}
+		System.out.println("-----");
+
+		System.out.println("JSon");
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+
+		System.out.println(resultjson);
+		showJSONFaultyAST(resultjson);
+
+	}
+
+	@Test
+	public void testVerificationICSE888066_METHOD() {
+		String diffId = "888066";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/icse2015/" + diffId;
+
+		List<RepairPatterns> patterns = analyze(input);
+
+		System.out.println("Patterns: ");
+		for (RepairPatterns repairPatterns : patterns) {
+			System.out.println("-->" + repairPatterns);
+		}
+		System.out.println("-----");
+
+		System.out.println("JSon");
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+
+		System.out.println(resultjson);
+		showJSONFaultyAST(resultjson);
+
+	}
+
+	@Test
+	public void testVerificationICSE1002329_METHOD() {
+		String diffId = "1002329";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/icse2015/" + diffId;
+
+		List<RepairPatterns> patterns = analyze(input);
+
+		System.out.println("Patterns: ");
+		for (RepairPatterns repairPatterns : patterns) {
+			System.out.println("-->" + repairPatterns);
+		}
+		System.out.println("-----");
+
+		System.out.println("JSon");
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+
+		System.out.println(resultjson);
+		showJSONFaultyAST(resultjson);
+
+	}
+
+	@Test
+	public void testVerificationICSE_1064371_METHOD() {
+		String diffId = "1064371";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/icse2015/" + diffId;
+
+		List<RepairPatterns> patterns = analyze(input);
+
+		System.out.println("Patterns: ");
+		for (RepairPatterns repairPatterns : patterns) {
+			System.out.println("-->" + repairPatterns);
+		}
+		System.out.println("-----");
+
+		System.out.println("JSon");
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+
+		System.out.println(resultjson);
+		showJSONFaultyAST(resultjson);
+
+	}
+
+	@Test
+	public void testVerificationICSE_1086957_METHOD() {
+		// False positive
+		String diffId = "1086957";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/icse2015/" + diffId;
+
+		List<RepairPatterns> patterns = analyze(input);
+
+		System.out.println("Patterns: ");
+		for (RepairPatterns repairPatterns : patterns) {
+			System.out.println("-->" + repairPatterns);
 		}
 		System.out.println("-----");
 

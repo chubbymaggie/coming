@@ -250,6 +250,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			JsonObject fileModified = new JsonObject();
 
 			fileModified.addProperty("file", modifiedFile);
+			fileModified.addProperty("nr_root_ast_changes", diff.getRootOperations().size());
 			filesArray.add(fileModified);
 
 			Config config = new Config();
@@ -358,9 +359,9 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			CtElement affectedMoved = operation.getSrcNode();
 			MappingStore mappings = diff.getMappingsComp();
 
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "MV");
+			bugContext.put(CNTX_Property.OPERATION, "MV");
 
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
 			ITree affected = MappingAnalysis.getParentInSource(diff, movop.getAction());
 
@@ -369,8 +370,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			if (targetTreeParentNode != null) {
 				CtElement oldParentLocationInsertStmt = (CtElement) targetTreeParentNode.getMetadata("spoon_object");
 
-				bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-						cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+				bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
 			}
 
 		} else if (operation instanceof InsertOperation)
@@ -380,30 +380,27 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			CtElement oldLocation = ((InsertOperation) operation).getParent();
 			CtElement oldParentLocationInsertStmt = getStmtParent(oldLocation);
 
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, null);
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "INS");
+			bugContext.put(CNTX_Property.AFFECTED, null);
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+			bugContext.put(CNTX_Property.OPERATION, "INS");
 
 		} else if (operation instanceof DeleteOperation) {
 
 			DeleteOperation up = (DeleteOperation) operation;
 			CtElement oldLocation = operation.getSrcNode();
 			CtElement oldParentLocationInsertStmt = getStmtParent(oldLocation);
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "DEL");
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+			bugContext.put(CNTX_Property.OPERATION, "DEL");
 
 		} else if (operation instanceof UpdateOperation) {
 
 			UpdateOperation up = (UpdateOperation) operation;
 			CtElement oldLocation = operation.getSrcNode();
 			CtElement oldParentLocationInsertStmt = getStmtParent(oldLocation);
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "UPD");
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+			bugContext.put(CNTX_Property.OPERATION, "UPD");
 		}
 
 		if (bugContext != null)
@@ -426,7 +423,7 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 
 			// Element to move in source
 			CtElement affectedMoved = operation.getSrcNode();
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "MV");
+			bugContext.put(CNTX_Property.OPERATION, "MV");
 			// Find the parent
 
 			// let's find the destination in the Source Tree
@@ -434,14 +431,13 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			// This parent is from the dst
 			ITree newParentSRC = ma.getParent();
 
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedMoved));
 
 			ITree parentInRight = MappingAnalysis.getParentInRight(diff, ma);
 
 			CtElement parentMovedElementInDst = getStmtParent((CtElement) parentInRight.getMetadata("spoon_object"));// searchMapped(mappings,
 																														// parentInRight);
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(parentMovedElementInDst));
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(parentMovedElementInDst));
 
 		} else if (operation instanceof InsertOperation)
 
@@ -450,10 +446,9 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			CtElement affectedElement = op.getSrcNode();
 			CtElement newParentLocationInsertStmt = getStmtParent(affectedElement);
 
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedElement));
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(newParentLocationInsertStmt));
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "INS");
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(affectedElement));
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(newParentLocationInsertStmt));
+			bugContext.put(CNTX_Property.OPERATION, "INS");
 		} else if (operation instanceof DeleteOperation) {
 
 			DeleteOperation up = (DeleteOperation) operation;
@@ -470,10 +465,9 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 				CtElement parentDstInDst = (CtElement) mappedParentDst.getMetadata("spoon_object");
 
 				CtElement oldParentLocationInsertStmt = getStmtParent(parentDstInDst);
-				bugContext.getInformation().put(CNTX_Property.AFFECTED, null);
-				bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-						cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
-				bugContext.getInformation().put(CNTX_Property.OPERATION, "DEL");
+				bugContext.put(CNTX_Property.AFFECTED, null);
+				bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+				bugContext.put(CNTX_Property.OPERATION, "DEL");
 			}
 
 		} else if (operation instanceof UpdateOperation) {
@@ -482,10 +476,9 @@ public class DiffICSE15ContextAnalyzer extends BugFixRunner {
 			CtElement oldLocation = operation.getDstNode();
 			CtElement oldParentLocationInsertStmt = getStmtParent(oldLocation);
 
-			bugContext.getInformation().put(CNTX_Property.OPERATION, "UPD");
-			bugContext.getInformation().put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
-			bugContext.getInformation().put(CNTX_Property.AFFECTED_PARENT,
-					cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
+			bugContext.put(CNTX_Property.OPERATION, "UPD");
+			bugContext.put(CNTX_Property.AFFECTED, cresolver.retrieveBuggyInfo(oldLocation));
+			bugContext.put(CNTX_Property.AFFECTED_PARENT, cresolver.retrieveBuggyInfo(oldParentLocationInsertStmt));
 		}
 
 		if (bugContext != null)

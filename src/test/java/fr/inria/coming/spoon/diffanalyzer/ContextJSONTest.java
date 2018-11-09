@@ -126,6 +126,47 @@ public class ContextJSONTest {
 	}
 
 	@Test
+	public void testContext_M4_Closure9() {
+
+		String diffId = "Closure_9";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+		System.out.println(resultjson);
+		//
+		assertMarkedlAST(resultjson, CNTX_Property.M4_PARAMETER_RETURN_COMPABILITY, Boolean.TRUE);
+		assertMarkedlAST(resultjson,
+				CNTX_Property.M4_PARAMETER_RETURN_COMPABILITY + "_normalizeSourceName(java.lang.String)", Boolean.TRUE);
+
+		assertMarkedlAST(resultjson, CNTX_Property.M3_SIMILAR_METHOD_WITH_PARAMETER_COMP, Boolean.TRUE);
+
+		assertMarkedlAST(resultjson,
+				CNTX_Property.M3_SIMILAR_METHOD_WITH_PARAMETER_COMP + "_normalizeSourceName(java.lang.String)",
+				Boolean.TRUE);
+
+		assertMarkedlAST(resultjson, CNTX_Property.M2_SIMILAR_METHOD_WITH_SAME_RETURN, Boolean.FALSE);
+
+		// assertMarkedlAST(resultjson,
+		// "M2_SIMILAR_METHOD_WITH_SAME_RETURN_guessCJSModuleName(java.lang.String)",
+		// s Boolean.TRUE);
+	}
+
+	@Test
+	public void testContext_M1_Math_58() {
+
+		String diffId = "Math_58";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+		System.out.println(resultjson);
+		//
+		assertMarkedlAST(resultjson, CNTX_Property.M1_OVERLOADED_METHOD, Boolean.TRUE);
+
+		assertMarkedlAST(resultjson, CNTX_Property.M1_OVERLOADED_METHOD + "_fit(double[])", Boolean.TRUE);
+
+	}
+
+	@Test
 	public void testContext_v2_2() {
 
 		String diffId = "Math_26";
@@ -135,6 +176,8 @@ public class ContextJSONTest {
 		System.out.println(resultjson);
 		//
 		assertMarkedlAST(resultjson, CNTX_Property.V1_IS_TYPE_COMPATIBLE_METHOD_CALL_PARAM_RETURN, Boolean.FALSE);
+		assertMarkedlAST(resultjson, CNTX_Property.S3_TYPE_OF_FAULTY_STATEMENT + "_Return", Boolean.TRUE);
+
 	}
 
 	@Test
@@ -210,13 +253,17 @@ public class ContextJSONTest {
 	}
 
 	public static void assertMarkedlAST(JsonObject resultjson, CNTX_Property name, Boolean b) {
+		assertMarkedlAST(resultjson, name.name(), b);
+	}
+
+	public static void assertMarkedlAST(JsonObject resultjson, String name, Boolean b) {
 
 		System.out.println("**************** finding " + name);
 
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		String prettyJsonString = gson.toJson(resultjson);
 
-		// System.out.println(prettyJsonString);
+		System.out.println(prettyJsonString);
 		boolean found = false;
 		JsonArray affected = (JsonArray) resultjson.get("affected_files");
 		for (JsonElement jsonElement : affected) {
@@ -237,14 +284,19 @@ public class ContextJSONTest {
 				// System.out.println("--> AST element: \n" + jso.get("pattern_name"));
 				// System.out.println("suspicious element:\n" + prettyJsonString);
 				JsonObject asJsonObject = jso.get("context").getAsJsonObject().get("cntx").getAsJsonObject();
-				JsonPrimitive value = asJsonObject.get(name.toString()).getAsJsonPrimitive();
+				JsonElement property = asJsonObject.get(name.toString());
+				if (property != null) {
+					JsonPrimitive value = property.getAsJsonPrimitive();
 
-				System.out.println(name + " " + value.getAsString());
-				assertEquals(b, Boolean.parseBoolean(value.getAsString()));
-
+					System.out.println(name + " " + value.getAsString());
+					found = found || Boolean.parseBoolean(value.getAsString());
+				}
 			}
 
 		}
+
+		assertEquals(b, found);
+
 		// assertTrue("Node suspicious not found", found);
 	}
 }
