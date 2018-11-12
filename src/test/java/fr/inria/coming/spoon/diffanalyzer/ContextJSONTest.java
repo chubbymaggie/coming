@@ -181,7 +181,7 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_L1_1() {
+	public void testContext_L1_Closure20() {
 
 		String diffId = "Closure_20";
 
@@ -193,7 +193,7 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_L2_1() {
+	public void testContext_L2_Closure51() {
 
 		String diffId = "Closure_51";
 
@@ -205,7 +205,7 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_L3_1() {
+	public void testContext_L3_Chart_9() {
 
 		String diffId = "Chart_9";
 
@@ -217,7 +217,7 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_L4_1() {
+	public void testContext_L4_Closure_38() {
 
 		String diffId = "Closure_38";
 
@@ -229,7 +229,7 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_L5_1() {
+	public void testContext_L5_Closure_38() {
 
 		String diffId = "Closure_38";
 
@@ -241,15 +241,40 @@ public class ContextJSONTest {
 	}
 
 	@Test
-	public void testContext_S1_1() {
+	public void testContext_L6_Closure_31() {
+
+		String diffId = "Closure_31";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+		System.out.println(resultjson);
+		//
+		assertMarkedlAST(resultjson, CNTX_Property.LE6_HAS_NEGATION, Boolean.TRUE);
+	}
+
+	@Test
+	public void testContext_L7_Closure_18() {
+
+		String diffId = "Closure_18";
+
+		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
+		JsonObject resultjson = JSonTest.getContext(diffId, input);
+		System.out.println(resultjson);
+		//
+		assertMarkedlAST(resultjson, CNTX_Property.LE7_SIMPLE_VAR_IN_LOGIC, Boolean.TRUE);
+	}
+
+	@Test
+	public void testContext_S1_Chart_4() {
 
 		String diffId = "Chart_4";
 
 		String input = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/Defects4J/" + diffId;
 		JsonObject resultjson = JSonTest.getContext(diffId, input);
 		System.out.println(resultjson);
-		//
-		assertMarkedlAST(resultjson, CNTX_Property.S1_LOCAL_VAR_NOT_ASSIGNED, Boolean.TRUE);
+		// it's used in statement
+		// assertMarkedlAST(resultjson, CNTX_Property.S1_LOCAL_VAR_NOT_USED,
+		// Boolean.TRUE);
 	}
 
 	public static void assertMarkedlAST(JsonObject resultjson, CNTX_Property name, Boolean b) {
